@@ -1,1 +1,4 @@
 // ALEPHUtils
+#ifndef SELECTIONUTILS_H
+#define SELECTIONUTILS_H
+#endif
