@@ -70,6 +70,14 @@ namespace FCCAnalyses { namespace ALEPH { namespace Preprocess {
 float getJetPID(const rv::RVec<uint32_t>&                ClassBit,
                 const rv::RVec<edm4hep::MCParticleData>& particles);
 
+
+// Returns signed PDG per jet: +/-1=d, +/-2=u, +/-3=s, +/-4=c, +/-5=b
+// Matches jets to primary quarks (genStatus // 10000 == 14) by max cos(theta) 
+ROOT::VecOps::RVec<int>
+getJetPartonPDG(const ROOT::VecOps::RVec<uint32_t>& ClassBit,
+                const ROOT::VecOps::RVec<edm4hep::MCParticleData>& particles,
+                const ROOT::VecOps::RVec<fastjet::PseudoJet>& jets);
+
 /// Functor. Returns true if bit (m_class - 1) is set in ClassBit[0].
 struct sel_class_filter {
   const int m_class;
