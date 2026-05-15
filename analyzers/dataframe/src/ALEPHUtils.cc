@@ -29,6 +29,58 @@ float getJetPID(const rv::RVec<uint32_t>&                ClassBit,
     return -1.0f;
 }
 
+// Returns signed PDG per jet: +/-1=d, +/-2=u, +/-3=s, +/-4=c, +/-5=b
+// Matches jets to primary quarks (genStatus // 10000 == 14) by max cos(theta)
+ROOT::VecOps::RVec<int>
+getJetPartonPDG(const ROOT::VecOps::RVec<uint32_t>& ClassBit,
+                const ROOT::VecOps::RVec<edm4hep::MCParticleData>& particles,
+                const ROOT::VecOps::RVec<fastjet::PseudoJet>& jets)
+{
+    ROOT::VecOps::RVec<int> result(jets.size(), 0);
+
+    // Check qq̄ class bit (bit 15 = class 16)
+    if (ClassBit.empty() || !std::bitset<32>(ClassBit[0])[15])
+        return result;
+
+    // Find primary quarks: genStatus // 10000 == 14, |PDG| in [1,5]
+    std::vector<std::pair<int, TVector3>> primary_quarks;
+    for (const auto& p : particles) {
+        int abs_pdg = std::abs(p.PDG);
+        if (abs_pdg >= 1 && abs_pdg <= 5 && (p.generatorStatus / 10000) == 14) {
+            TVector3 mom(p.momentum.x, p.momentum.y, p.momentum.z);
+            primary_quarks.push_back({p.PDG, mom});
+        }
+    }
+
+    // Sort by momentum descending, keep top 2 (direct Z daughters)
+    std::sort(primary_quarks.begin(), primary_quarks.end(),
+              [](const auto& a, const auto& b) {
+                  return a.second.Mag() > b.second.Mag();
+              });
+    if (primary_quarks.size() > 2)
+        primary_quarks.resize(2);
+
+    if (primary_quarks.size() < 2) return result;
+
+    // Match each jet to nearest primary quark by max cos(theta)
+    for (size_t j = 0; j < jets.size(); ++j) {
+        TVector3 jet_dir(jets[j].px(), jets[j].py(), jets[j].pz());
+        jet_dir = jet_dir.Unit();
+
+        double best_cos = -2.;
+        int best_pdg = 0;
+        for (const auto& [pdg, mom] : primary_quarks) {
+            double cos_theta = jet_dir.Dot(mom.Unit());
+            if (cos_theta > best_cos) {
+                best_cos = cos_theta;
+                best_pdg = pdg;
+            }
+        }
+        result[j] = best_pdg;
+    }
+    return result;
+}
+
 sel_class_filter::sel_class_filter(int arg_class) : m_class(arg_class) {}
 
 bool sel_class_filter::operator()(const rv::RVec<uint32_t>& bitset_coll) const
