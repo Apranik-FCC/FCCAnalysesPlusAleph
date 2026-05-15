@@ -258,7 +258,7 @@ VertexFitter_Tk(int Primary, ROOT::VecOps::RVec<edm4hep::TrackState> tracks,
 ROOT::VecOps::RVec<edm4hep::TrackState>
 get_PrimaryTracks(ROOT::VecOps::RVec<edm4hep::TrackState> tracks,
                   bool BeamSpotConstraint, double bsc_sigmax, double bsc_sigmay,
-                  double bsc_sigmaz, double bsc_x, double bsc_y, double bsc_z) {
+                  double bsc_sigmaz, double bsc_x, double bsc_y, double bsc_z, float CHI2MAX) {
 
   // iterative procedure to determine the primary vertex - and the primary
   // tracks
@@ -272,8 +272,7 @@ get_PrimaryTracks(ROOT::VecOps::RVec<edm4hep::TrackState> tracks,
 
   // bool debug  = true ;
   bool debug = false;
-  float CHI2MAX = 25;
-  //  float CHI2MAX = 10;
+  
 
   if (debug) {
     std::cout << " ... enter in VertexFitterSimple::get_PrimaryTracks   Ntr = "
